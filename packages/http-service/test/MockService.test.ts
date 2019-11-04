@@ -34,4 +34,16 @@ describe('Mock service', () => {
       'Method: GET, URL: /users is already defined'
     );
   });
+
+  it('should return mocked response with delay', async function() {
+    const DELAY = 100;
+    const RESPONSE = { users: [] };
+    const mockService = new MockService({ delay: DELAY });
+
+    mockService.get('/users', RESPONSE);
+
+    const results = await mockService.from('get', '/users');
+
+    expect(results).toEqual(RESPONSE);
+  });
 });

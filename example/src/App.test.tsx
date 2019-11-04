@@ -13,11 +13,11 @@ it("renders without crashing", async () => {
       }
     ]
   });
+
   const { getByTestId, debug } = render(<App />);
 
   await wait(() => {
-    debug();
-
     expect(getByTestId("app-users-list")).toBeDefined();
+    debug();
   });
 });

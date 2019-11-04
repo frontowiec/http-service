@@ -1,8 +1,17 @@
 type Methods = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
+type MockOptions = {
+  delay?: number;
+};
+
 export class MockService {
+  private static defaultOptions: MockOptions = { delay: 0 };
   private getRepository = new Map<string, unknown>();
   private postRepository = new Map<string, unknown>();
+
+  constructor(private readonly options: MockOptions = {}) {
+    this.options = { ...MockService.defaultOptions, ...this.options };
+  }
 
   public from<R = unknown>(method: Methods, url: string): Promise<R> {
     const repository = this.getRepositoryByMethodType(method);
@@ -14,7 +23,9 @@ export class MockService {
       );
     }
 
-    return new Promise<R>(resolve => resolve(result as R));
+    return new Promise<R>(resolve =>
+      setTimeout(() => resolve(result as R), this.options.delay)
+    );
   }
 
   public get<R>(url: string, response: R): void {

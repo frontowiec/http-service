@@ -3,7 +3,8 @@ import { HttpService } from "http-service";
 
 export const httpService = new HttpService({
   host: "http://localhost:4000/api",
-  enabledMock: process.env.NODE_ENV === "test"
+  enabledMock: process.env.NODE_ENV === "test",
+  mockDelay: 1000
 });
 
 export interface User {
@@ -23,6 +24,10 @@ const App = () => {
   useEffect(() => {
     getUsers().then(({ users }) => setUsers(users));
   }, []);
+
+  if (users.length === 0) {
+    return <strong>Loading...</strong>;
+  }
 
   return (
     <ul data-testid="app-users-list">

@@ -22,20 +22,31 @@ export interface AjaxError extends Error {
   status: number;
 }
 
+// todo: trochę Ci się mieszają opcje mocka, http-service z ustawieniami requesta
 export type Options = {
   host?: string;
   headers?: HeadersInit;
   responseType?: 'json' | 'text' | 'arrayBuffer' | 'blob' | 'formData';
   enabledMock?: boolean;
+  mockDelay?: number;
 };
+
+// todo: mock delay
+// todo: mock http errors
+// todo: interceptors
+// todo: post method
+// todo: extract generic parts
 
 export class HttpService {
   private static defaultOptions: Options = {
     responseType: 'json',
     enabledMock: process.env.NODE_ENV === 'test',
+    mockDelay: 0,
   };
   private urlService = new UrlService();
-  private mockService = new MockService();
+  private mockService = new MockService({
+    delay: this.options.mockDelay,
+  });
 
   public mock = {
     get: this.mockService.get.bind(this.mockService),
