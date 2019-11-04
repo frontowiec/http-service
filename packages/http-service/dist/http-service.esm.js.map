@@ -1,0 +1,1 @@
+{"version":3,"file":"http-service.esm.js","sources":["../src/HttpService.ts"],"sourcesContent":["export class HttpService {\n\n}\n"],"names":["HttpService"],"mappings":"IAAaA,WAAb;;;;"}
