@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { HttpService } from "http-service";
 
-interface User {
+export const httpService = new HttpService({
+  host: "http://localhost:4000/api",
+  enabledMock: process.env.NODE_ENV === "test"
+});
+
+export interface User {
   name: string;
   gender: string;
   birthday: string;
@@ -8,9 +14,7 @@ interface User {
 }
 
 const getUsers = () => {
-  return fetch("http://localhost:4000/api/users").then(response =>
-    response.json()
-  ) as Promise<{ users: User[] }>;
+  return httpService.get<{ users: User[] }>("/users");
 };
 
 const App = () => {
@@ -21,7 +25,7 @@ const App = () => {
   }, []);
 
   return (
-    <ul>
+    <ul data-testid="app-users-list">
       {users.map(user => (
         <li key={user.name}>{user.name}</li>
       ))}
