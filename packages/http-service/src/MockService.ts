@@ -38,12 +38,19 @@ export class MockService {
     );
   }
 
-  public get<R>(url: string, response: R): void {
+  public clear(method: Methods, url: string) {
+    const repository = this.getRepositoryByMethodType(method);
+    repository.delete(url);
+  }
+
+  public get<R>(url: string, response: R): Function {
     if (this.getRepository.get(url)) {
       throw new Error(`Method: GET, URL: ${url} is already defined`);
     }
 
     this.getRepository.set(url, response);
+
+    return () => this.clear('get', url);
   }
 
   private getRepositoryByMethodType(method: Methods) {

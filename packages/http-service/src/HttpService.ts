@@ -36,7 +36,10 @@ export interface ReqInterceptor extends Options {
   url?: string;
 }
 
-// todo: interceptors
+type Mock = {
+  get: <R>(url: string, response: R) => Function;
+};
+
 // todo: post method
 // todo: extract generic parts
 
@@ -51,7 +54,7 @@ export class HttpService {
     delay: this.options.mockDelay,
   });
 
-  public mock = {
+  public mock: Mock = {
     get: this.mockService.get.bind(this.mockService),
   };
 
