@@ -4,6 +4,8 @@ import { AjaxError } from '../src/AjaxError';
 const MOCK_RESPONSE_DATA = { users: [] };
 
 describe('Http service', () => {
+  afterEach(jest.clearAllMocks);
+
   it('should call api for data with global options', () => {
     // @ts-ignore
     fetch.mockResponseOnce(JSON.stringify(MOCK_RESPONSE_DATA));
@@ -171,5 +173,34 @@ describe('Http service', () => {
     } catch (e) {
       expect(e).toEqual(ERROR);
     }
+  });
+
+  it('should map request before send and then eject interceptor', function() {
+    // @ts-ignore
+    fetch.mockResponse(JSON.stringify(MOCK_RESPONSE_DATA));
+
+    const httpService = new HttpService({
+      host: 'http://localhost:4000/api/',
+      headers: { Authorization: 'token' },
+      enabledMock: false,
+      reqInterceptor: req => {
+        return { ...req, headers: { Authorization: 'specialToken' } };
+      },
+    });
+
+    // @ts-ignore
+    const fetchSpy = jest.spyOn(global, 'fetch');
+
+    httpService.get('/users');
+
+    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:4000/api/users', {
+      headers: { Authorization: 'specialToken' },
+    });
+
+    // eject interceptor
+    httpService.get('/users', { reqInterceptor: undefined });
+    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:4000/api/users', {
+      headers: { Authorization: 'token' },
+    });
   });
 });

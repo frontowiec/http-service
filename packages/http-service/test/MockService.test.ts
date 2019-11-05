@@ -2,6 +2,8 @@ import { MockService } from '../src/MockService';
 import { AjaxError } from '../src/AjaxError';
 
 describe('Mock service', () => {
+  afterEach(jest.clearAllMocks)
+
   it('should set and return mocked data for http get method', async () => {
     const mockService = new MockService();
     const spyFrom = jest.spyOn(mockService, 'from');

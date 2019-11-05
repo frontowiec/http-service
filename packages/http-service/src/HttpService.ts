@@ -1,6 +1,6 @@
 import { UrlService } from './UrlService';
 import { MockService } from './MockService';
-import {AjaxError} from "./AjaxError";
+import { AjaxError } from './AjaxError';
 
 /*export interface AjaxRequest {
   url?: string;
@@ -19,16 +19,22 @@ import {AjaxError} from "./AjaxError";
   responseType?: string;
 }*/
 
-// todo: trochę Ci się mieszają opcje mocka, http-service z ustawieniami requesta
-export type Options = {
+export interface Request {
   host?: string;
   headers?: HeadersInit;
   responseType?: 'json' | 'text' | 'arrayBuffer' | 'blob' | 'formData';
+}
+
+export interface Options extends Request {
   enabledMock?: boolean;
   mockDelay?: number;
-};
+  reqInterceptor?: (req: ReqInterceptor) => ReqInterceptor;
+}
 
-// todo: mock http errors
+export interface ReqInterceptor extends Options {
+  url?: string;
+}
+
 // todo: interceptors
 // todo: post method
 // todo: extract generic parts
@@ -38,6 +44,7 @@ export class HttpService {
     responseType: 'json',
     enabledMock: process.env.NODE_ENV === 'test',
     mockDelay: 0,
+    reqInterceptor: req => req,
   };
   private urlService = new UrlService();
   private mockService = new MockService({
@@ -54,28 +61,41 @@ export class HttpService {
 
   public get<R = unknown>(url: string, options?: Options): Promise<R> {
     const mergedOptions = { ...this.options, ...options };
+
+    // secure correct endpoint
     let endpoint: string = '';
 
     if (mergedOptions.host !== undefined) {
       endpoint = this.urlService.parse(mergedOptions.host, url);
     }
 
-    if (mergedOptions.enabledMock) {
+    // build request options
+    let mappedOptions = mergedOptions;
+
+    if (mergedOptions.reqInterceptor !== undefined) {
+      mappedOptions = mergedOptions.reqInterceptor({
+        ...mergedOptions,
+        url: endpoint,
+      });
+    }
+
+    // return mock in test env
+    if (mappedOptions.enabledMock) {
       return this.mockService.from('get', url);
     }
 
-    return fetch(endpoint, { headers: mergedOptions.headers }).then(
+    return fetch(endpoint, { headers: mappedOptions.headers }).then(
       response => {
         if (!response.ok) {
           throw {
             status: response.status,
             message: response.statusText,
             name: 'Ajax Error',
-            response: response[mergedOptions.responseType!](),
+            response: response[mappedOptions.responseType!](),
           } as AjaxError;
         }
 
-        return response[mergedOptions.responseType!]();
+        return response[mappedOptions.responseType!]();
       }
     );
   }
