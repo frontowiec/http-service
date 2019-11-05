@@ -1,5 +1,6 @@
-import { UrlService } from '../src/UrlService';
-import { MockService } from '../src/MockService';
+import { UrlService } from './UrlService';
+import { MockService } from './MockService';
+import {AjaxError} from "./AjaxError";
 
 /*export interface AjaxRequest {
   url?: string;
@@ -18,10 +19,6 @@ import { MockService } from '../src/MockService';
   responseType?: string;
 }*/
 
-export interface AjaxError extends Error {
-  status: number;
-}
-
 // todo: trochę Ci się mieszają opcje mocka, http-service z ustawieniami requesta
 export type Options = {
   host?: string;
@@ -31,7 +28,6 @@ export type Options = {
   mockDelay?: number;
 };
 
-// todo: mock delay
 // todo: mock http errors
 // todo: interceptors
 // todo: post method
@@ -75,6 +71,7 @@ export class HttpService {
             status: response.status,
             message: response.statusText,
             name: 'Ajax Error',
+            response: response[mergedOptions.responseType!](),
           } as AjaxError;
         }
 

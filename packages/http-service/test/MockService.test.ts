@@ -1,9 +1,10 @@
 import { MockService } from '../src/MockService';
+import { AjaxError } from '../src/AjaxError';
 
 describe('Mock service', () => {
   it('should set and return mocked data for http get method', async () => {
     const mockService = new MockService();
-    const spyForm = jest.spyOn(mockService, 'from');
+    const spyFrom = jest.spyOn(mockService, 'from');
     const spyGet = jest.spyOn(mockService, 'get');
 
     const RESPONSE = { users: [] };
@@ -13,12 +14,33 @@ describe('Mock service', () => {
     const results = await mockService.from('get', '/users');
 
     expect(spyGet).toHaveBeenCalledWith('/users', RESPONSE);
-    expect(spyForm).toHaveBeenCalledWith('get', '/users');
+    expect(spyFrom).toHaveBeenCalledWith('get', '/users');
     expect(results).toEqual(RESPONSE);
+  });
+
+  it('should set and return error object for failed http get method', async function() {
+    const mockService = new MockService();
+
+    const ERROR = {
+      name: 'Ajax error',
+      status: 500,
+      message: 'Internal Server Error',
+      response: { message: 'Internal Server Error' },
+    };
+
+    mockService.get<AjaxError>('/users', ERROR);
+
+    try {
+      await mockService.from('get', '/users');
+    } catch (e) {
+      expect(e).toEqual(ERROR);
+    }
   });
 
   it('should throw exception when called mock not exist yet', function() {
     const mockService = new MockService();
+
+    // no previously set mock
 
     expect(() => mockService.from('get', '/users')).toThrowError(
       'Method: GET, URL: /users is not set yet'

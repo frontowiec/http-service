@@ -1,3 +1,5 @@
+import { AjaxError } from 'AjaxError';
+
 type Methods = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 type MockOptions = {
@@ -23,8 +25,16 @@ export class MockService {
       );
     }
 
-    return new Promise<R>(resolve =>
-      setTimeout(() => resolve(result as R), this.options.delay)
+    return new Promise<R>((resolve, reject) =>
+      setTimeout(() => {
+        const error = result as AjaxError;
+
+        if (!!error.status) {
+          reject(result);
+          return;
+        }
+        resolve(result as R);
+      }, this.options.delay)
     );
   }
 

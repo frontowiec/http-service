@@ -1,4 +1,5 @@
-import { AjaxError, HttpService, Options } from '../src/HttpService';
+import { HttpService, Options } from '../src/HttpService';
+import { AjaxError } from '../src/AjaxError';
 
 const MOCK_RESPONSE_DATA = { users: [] };
 
@@ -102,10 +103,11 @@ describe('Http service', () => {
   });
 
   it('should return error', async () => {
-    const ajaxError: AjaxError = {
+    const ajaxError: AjaxError<{ message: string }> = {
       name: 'Ajax Error',
       message: 'Internal Server Error',
       status: 500,
+      response: { message: 'Internal Server Error' },
     };
     // @ts-ignore
     fetch.mockReject(ajaxError);
@@ -125,7 +127,7 @@ describe('Http service', () => {
     }
   });
 
-  it('should mock function in test env', async () => {
+  it('should mock api call', async () => {
     // mock request without jest-mock!
     const globalOptions: Options = {
       host: 'http://localhost:4000/api',
@@ -144,5 +146,30 @@ describe('Http service', () => {
 
     expect(spyMockGet).toHaveBeenCalledWith('/users', MOCKED_RESPONSE);
     expect(RESPONSE).toEqual(MOCKED_RESPONSE);
+  });
+
+  it('should mock failed api call ', async () => {
+    // mock request without jest-mock!
+    const globalOptions: Options = {
+      host: 'http://localhost:4000/api',
+      headers: { Authorization: 'token' },
+    };
+
+    const httpService = new HttpService(globalOptions);
+
+    const ERROR: AjaxError = {
+      status: 500,
+      name: 'Ajax Error',
+      message: 'Internal Server Error',
+      response: { message: 'Internal Server Error' },
+    };
+
+    httpService.mock.get('/users', ERROR);
+
+    try {
+      await httpService.get('/users');
+    } catch (e) {
+      expect(e).toEqual(ERROR);
+    }
   });
 });
