@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AjaxError, HttpService } from "http-service";
+import { HttpService, AjaxError } from "http-service";
 import ErrorBoundary from "react-error-boundary";
 
 export const httpService = new HttpService({
@@ -10,14 +10,7 @@ export const httpService = new HttpService({
     return { ...req, headers: { Authorization: "its-not-real-token" } };
   },
   resInterceptor(res) {
-    return res.then((r: any) => {
-      return {
-        users: r.users.map((user: User) => ({
-          ...user,
-          name: user.name.toUpperCase()
-        }))
-      } as any;
-    });
+    return res;
   }
 });
 
@@ -32,9 +25,23 @@ const getUsers = () => {
   return httpService.get<{ users: User[] }>("/users");
 };
 
+const postUsers = () => {
+  return httpService.post<{ user: User }, { id: number }>("/users", { id: 1 });
+};
+
 const App = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<AjaxError | null>(null);
+
+  const addRandomUser = () => {
+    postUsers()
+      .then(({ user }) => {
+        setUsers([user, ...users]);
+      })
+      .catch(e => {
+        setError(e);
+      });
+  };
 
   useEffect(() => {
     getUsers()
@@ -53,11 +60,18 @@ const App = () => {
   }
 
   return (
-    <ul data-testid="app-users-list">
-      {users.map(user => (
-        <li key={user.name}>{user.name}</li>
-      ))}
-    </ul>
+    <div>
+      <button data-testid="add-user-button" onClick={() => addRandomUser()}>
+        Add random user
+      </button>
+      <ul data-testid="app-users-list">
+        {users.map((user, index) => (
+          <li key={user.name} data-testid={`app-users-list-item-${index}`}>
+            {user.name}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 

@@ -41,7 +41,6 @@ type Mock = {
   post: <R>(url: string, response: R) => Function;
 };
 
-// todo: post method
 // todo: extract generic parts
 
 export class HttpService {

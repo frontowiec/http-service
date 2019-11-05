@@ -435,7 +435,7 @@ describe('should map response before .then method and then eject interceptor - w
     expect(responseTwo).toEqual({ users: [] });
   });
 
-  it('post method', async function () {
+  it('post method', async function() {
     const httpService = new HttpService({
       host: 'http://localhost:4000/api/',
       headers: { Authorization: 'token' },
@@ -451,9 +451,13 @@ describe('should map response before .then method and then eject interceptor - w
     expect(responseOne).toEqual({ users: [], status: 'active' });
 
     // eject interceptor
-    const responseTwo = await httpService.post('/users', {},{
-      resInterceptor: undefined,
-    });
+    const responseTwo = await httpService.post(
+      '/users',
+      {},
+      {
+        resInterceptor: undefined,
+      }
+    );
 
     expect(responseTwo).toEqual({ users: [] });
   });
