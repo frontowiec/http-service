@@ -53,6 +53,16 @@ export class MockService {
     return () => this.clear('get', url);
   }
 
+  public post<R>(url: string, response: R): Function {
+    if (this.postRepository.get(url)) {
+      throw new Error(`Method: POST, URL: ${url} is already defined`);
+    }
+
+    this.postRepository.set(url, response);
+
+    return () => this.clear('post', url);
+  }
+
   private getRepositoryByMethodType(method: Methods) {
     switch (method) {
       case 'get':

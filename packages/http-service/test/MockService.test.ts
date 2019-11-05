@@ -20,6 +20,22 @@ describe('Mock service', () => {
     expect(results).toEqual(RESPONSE);
   });
 
+  it('should set and return mocked data for http post method', async () => {
+    const mockService = new MockService();
+    const spyFrom = jest.spyOn(mockService, 'from');
+    const spyPost = jest.spyOn(mockService, 'post');
+
+    const RESPONSE = { user: {id: 1} };
+
+    mockService.post('/users', RESPONSE);
+
+    const results = await mockService.from('post', '/users');
+
+    expect(spyPost).toHaveBeenCalledWith('/users', RESPONSE);
+    expect(spyFrom).toHaveBeenCalledWith('post', '/users');
+    expect(results).toEqual(RESPONSE);
+  });
+
   it('should set and return error object for failed http get method', async function() {
     const mockService = new MockService();
 

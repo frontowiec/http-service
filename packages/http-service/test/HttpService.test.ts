@@ -3,23 +3,23 @@ import { AjaxError } from '../src/AjaxError';
 
 const MOCK_RESPONSE_DATA = { users: [] };
 
-describe('Http service', () => {
+describe('should call api for data with global options', function() {
   afterEach(jest.clearAllMocks);
 
-  it('should call api for data with global options', () => {
+  // @ts-ignore
+  const fetchSpy = jest.spyOn(global, 'fetch');
+
+  const globalOptions: Options = {
+    host: 'http://localhost:4000/api',
+    headers: { Authorization: 'token' },
+    enabledMock: false,
+  };
+
+  const httpService = new HttpService(globalOptions);
+
+  it('get method', () => {
     // @ts-ignore
     fetch.mockResponseOnce(JSON.stringify(MOCK_RESPONSE_DATA));
-
-    // @ts-ignore
-    const fetchSpy = jest.spyOn(global, 'fetch');
-
-    const globalOptions: Options = {
-      host: 'http://localhost:4000/api',
-      headers: { Authorization: 'token' },
-      enabledMock: false,
-    };
-
-    const httpService = new HttpService(globalOptions);
 
     const getSpy = jest.spyOn(httpService, 'get');
 
@@ -32,26 +32,48 @@ describe('Http service', () => {
     });
   });
 
-  it('should call api for data with overrides options', () => {
+  it('post method', async function() {
+    // @ts-ignore
+    fetch.mockResponseOnce(JSON.stringify({ user: { id: 1 } }));
+
+    const BODY = { user: { id: 1 } };
+
+    const postSpy = jest.spyOn(httpService, 'post');
+
+    const result = await httpService.post('/users', BODY);
+
+    expect(postSpy).toHaveBeenCalledWith('/users', BODY);
+    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:4000/api/users', {
+      headers: { Authorization: 'token' },
+      body: JSON.stringify(BODY),
+    });
+    expect(result).toEqual(BODY);
+  });
+});
+
+describe('should call api for data with overrides options', function() {
+  afterEach(jest.clearAllMocks);
+
+  // @ts-ignore
+  const fetchSpy = jest.spyOn(global, 'fetch');
+
+  const globalOptions: Options = {
+    host: 'http://localhost:4000/api',
+    headers: { Authorization: 'token' },
+    enabledMock: false,
+  };
+
+  const localOptions: Options = {
+    host: 'http://localhost:5000/api',
+    headers: { 'response-type': 'text' },
+    enabledMock: false,
+  };
+
+  const httpService = new HttpService(globalOptions);
+
+  it('get method', () => {
     // @ts-ignore
     fetch.mockResponseOnce(JSON.stringify(MOCK_RESPONSE_DATA));
-
-    // @ts-ignore
-    const fetchSpy = jest.spyOn(global, 'fetch');
-
-    const globalOptions: Options = {
-      host: 'http://localhost:4000/api',
-      headers: { Authorization: 'token' },
-      enabledMock: false,
-    };
-
-    const localOptions: Options = {
-      host: 'http://localhost:5000/api',
-      headers: { 'response-type': 'text' },
-      enabledMock: false,
-    };
-
-    const httpService = new HttpService(globalOptions);
 
     const getSpy = jest.spyOn(httpService, 'get');
 
@@ -63,109 +85,185 @@ describe('Http service', () => {
     });
   });
 
-  it('should call api and return parsed json', async () => {
+  it('post method', function() {
+    // @ts-ignore
+    fetch.mockResponseOnce(JSON.stringify({ user: { id: 1 } }));
+
+    const postSpy = jest.spyOn(httpService, 'post');
+
+    httpService.post('/users', {}, localOptions);
+    expect(postSpy).toHaveBeenCalledWith('/users', {}, localOptions);
+    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:5000/api/users', {
+      headers: localOptions.headers,
+      body: JSON.stringify({}),
+    });
+  });
+});
+
+describe('should call api and return parsed json', function() {
+  afterEach(jest.clearAllMocks);
+
+  // @ts-ignore
+  const fetchSpy = jest.spyOn(global, 'fetch');
+
+  const globalOptions: Options = {
+    host: 'http://localhost:4000/api',
+    headers: { Authorization: 'token' },
+    enabledMock: false,
+  };
+
+  const httpService = new HttpService(globalOptions);
+
+  it('get method', async () => {
     // @ts-ignore
     fetch.mockResponseOnce(JSON.stringify(MOCK_RESPONSE_DATA));
-
-    // @ts-ignore
-    const fetchSpy = jest.spyOn(global, 'fetch');
-
-    const globalOptions: Options = {
-      host: 'http://localhost:4000/api',
-      headers: { Authorization: 'token' },
-      enabledMock: false,
-    };
-
-    const httpService = new HttpService(globalOptions);
 
     const result = await httpService.get('/users');
 
     expect(result).toEqual(MOCK_RESPONSE_DATA);
   });
 
-  it('should call api and return text', async () => {
+  it('post method', async function() {
+    const POST_RESPONSE = { user: { id: 1 } };
+    // @ts-ignore
+    fetch.mockResponseOnce(JSON.stringify(POST_RESPONSE));
+
+    const result = await httpService.post('/users', {});
+
+    expect(result).toEqual(POST_RESPONSE);
+  });
+});
+
+describe('should call api and return text', function() {
+  afterEach(jest.clearAllMocks);
+
+  // @ts-ignore
+  const fetchSpy = jest.spyOn(global, 'fetch');
+
+  const globalOptions: Options = {
+    host: 'http://localhost:4000/api',
+    headers: { Authorization: 'token' },
+    responseType: 'text',
+    enabledMock: false,
+  };
+
+  const httpService = new HttpService(globalOptions);
+
+  it('get method', async () => {
     // @ts-ignore
     fetch.mockResponseOnce(JSON.stringify(MOCK_RESPONSE_DATA));
-
-    // @ts-ignore
-    const fetchSpy = jest.spyOn(global, 'fetch');
-
-    const globalOptions: Options = {
-      host: 'http://localhost:4000/api',
-      headers: { Authorization: 'token' },
-      responseType: 'text',
-      enabledMock: false,
-    };
-
-    const httpService = new HttpService(globalOptions);
 
     const result = await httpService.get('/users');
 
     expect(result).toEqual(JSON.stringify(MOCK_RESPONSE_DATA));
   });
 
-  it('should return error', async () => {
-    const ajaxError: AjaxError<{ message: string }> = {
-      name: 'Ajax Error',
-      message: 'Internal Server Error',
-      status: 500,
-      response: { message: 'Internal Server Error' },
-    };
+  it('post method', async function() {
+    const POST_RESPONSE = { user: { id: 1 } };
+    // @ts-ignore
+    fetch.mockResponseOnce(JSON.stringify(POST_RESPONSE));
+
+    const result = await httpService.post('/users', {});
+
+    expect(result).toEqual(JSON.stringify(POST_RESPONSE));
+  });
+});
+
+describe('should return error', function() {
+  afterEach(jest.clearAllMocks);
+
+  const ajaxError: AjaxError<{ message: string }> = {
+    name: 'Ajax Error',
+    message: 'Internal Server Error',
+    status: 500,
+    response: { message: 'Internal Server Error' },
+  };
+
+  const globalOptions: Options = {
+    host: 'http://localhost:4000/api',
+    headers: { Authorization: 'token' },
+    enabledMock: false,
+  };
+
+  const httpService = new HttpService(globalOptions);
+
+  it('get method', () => {
     // @ts-ignore
     fetch.mockReject(ajaxError);
 
-    const globalOptions: Options = {
-      host: 'http://localhost:4000/api',
-      headers: { Authorization: 'token' },
-      enabledMock: false,
-    };
-
-    const httpService = new HttpService(globalOptions);
-
-    try {
-      await httpService.get('/users');
-    } catch (e) {
-      expect(e).toEqual(ajaxError);
-    }
+    expect(httpService.get('/users')).rejects.toEqual(ajaxError);
   });
 
-  it('should mock api call', async () => {
+  it('post method', function() {
+    // @ts-ignore
+    fetch.mockReject(ajaxError);
+
+    expect(httpService.post('/users', {})).rejects.toEqual(ajaxError);
+  });
+});
+
+describe('should mock api call', function() {
+  afterEach(jest.clearAllMocks);
+
+  const globalOptions: Options = {
+    host: 'http://localhost:4000/api',
+    headers: { Authorization: 'token' },
+  };
+
+  const httpService = new HttpService(globalOptions);
+
+  it('get method', async () => {
     // mock request without jest-mock!
-    const globalOptions: Options = {
-      host: 'http://localhost:4000/api',
-      headers: { Authorization: 'token' },
-    };
-
-    const httpService = new HttpService(globalOptions);
-
     const spyMockGet = jest.spyOn(httpService.mock, 'get');
 
     const MOCKED_RESPONSE = { users: [] };
 
-    httpService.mock.get('/users', MOCKED_RESPONSE);
+    const clear = httpService.mock.get('/users', MOCKED_RESPONSE);
 
     const RESPONSE = await httpService.get('/users');
 
     expect(spyMockGet).toHaveBeenCalledWith('/users', MOCKED_RESPONSE);
     expect(RESPONSE).toEqual(MOCKED_RESPONSE);
+
+    clear();
   });
 
-  it('should mock failed api call ', async () => {
+  it('post method', async function() {
     // mock request without jest-mock!
-    const globalOptions: Options = {
-      host: 'http://localhost:4000/api',
-      headers: { Authorization: 'token' },
-    };
+    const spyMockPost = jest.spyOn(httpService.mock, 'post');
 
-    const httpService = new HttpService(globalOptions);
+    const MOCKED_RESPONSE = { users: [] };
 
-    const ERROR: AjaxError = {
-      status: 500,
-      name: 'Ajax Error',
-      message: 'Internal Server Error',
-      response: { message: 'Internal Server Error' },
-    };
+    const clear = httpService.mock.post('/users', MOCKED_RESPONSE);
 
+    const RESPONSE = await httpService.post('/users', {});
+
+    expect(spyMockPost).toHaveBeenCalledWith('/users', MOCKED_RESPONSE);
+    expect(RESPONSE).toEqual(MOCKED_RESPONSE);
+
+    clear();
+  });
+});
+
+describe('should mock failed api call', function() {
+  afterEach(jest.clearAllMocks);
+
+  const globalOptions: Options = {
+    host: 'http://localhost:4000/api',
+    headers: { Authorization: 'token' },
+  };
+
+  const httpService = new HttpService(globalOptions);
+
+  const ERROR: AjaxError = {
+    status: 500,
+    name: 'Ajax Error',
+    message: 'Internal Server Error',
+    response: { message: 'Internal Server Error' },
+  };
+
+  it('get method ', async () => {
+    // mock request without jest-mock!
     httpService.mock.get('/users', ERROR);
 
     try {
@@ -175,7 +273,22 @@ describe('Http service', () => {
     }
   });
 
-  it('should map request before send and then eject interceptor', function() {
+  it('post method', async function() {
+    // mock request without jest-mock!
+    httpService.mock.post('/users', ERROR);
+
+    try {
+      await httpService.get('/users');
+    } catch (e) {
+      expect(e).toEqual(ERROR);
+    }
+  });
+});
+
+describe('should map request before send and then eject interceptor', function() {
+  afterEach(jest.clearAllMocks);
+
+  it('get method', function() {
     // @ts-ignore
     fetch.mockResponse(JSON.stringify(MOCK_RESPONSE_DATA));
 
@@ -205,7 +318,43 @@ describe('Http service', () => {
     });
   });
 
-  it('should map response before .then method and then eject interceptor', async function() {
+  it('post method', function() {
+    // @ts-ignore
+    fetch.mockResponse(JSON.stringify(MOCK_RESPONSE_DATA));
+
+    const httpService = new HttpService({
+      host: 'http://localhost:4000/api/',
+      headers: { Authorization: 'token' },
+      enabledMock: false,
+      reqInterceptor: req => {
+        return { ...req, headers: { Authorization: 'specialToken' } };
+      },
+    });
+
+    // @ts-ignore
+    const fetchSpy = jest.spyOn(global, 'fetch');
+
+    httpService.post('/users', {});
+
+    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:4000/api/users', {
+      headers: { Authorization: 'specialToken' },
+      body: JSON.stringify({}),
+    });
+
+    // eject interceptor
+    httpService.post('/users', {}, { reqInterceptor: undefined });
+
+    expect(fetchSpy).toHaveBeenCalledWith('http://localhost:4000/api/users', {
+      headers: { Authorization: 'token' },
+      body: JSON.stringify({}),
+    });
+  });
+});
+
+describe('should map response before .then method and then eject interceptor', function() {
+  afterEach(jest.clearAllMocks);
+
+  it('get method', async function() {
     // @ts-ignore
     fetch.mockResponse(JSON.stringify(MOCK_RESPONSE_DATA));
 
@@ -230,7 +379,40 @@ describe('Http service', () => {
     expect(responseTwo).toEqual({ users: [] });
   });
 
-  it('should map response before .then method and then eject interceptor - with mock', async function() {
+  it('post method', async function() {
+    // @ts-ignore
+    fetch.mockResponse(JSON.stringify(MOCK_RESPONSE_DATA));
+
+    const httpService = new HttpService({
+      host: 'http://localhost:4000/api/',
+      headers: { Authorization: 'token' },
+      enabledMock: false,
+      resInterceptor: res => {
+        return res.then(r => ({ ...r, status: 'active' }));
+      },
+    });
+
+    const responseOne = await httpService.post('/users', {});
+
+    expect(responseOne).toEqual({ users: [], status: 'active' });
+
+    // eject interceptor
+    const responseTwo = await httpService.post(
+      '/users',
+      {},
+      {
+        resInterceptor: undefined,
+      }
+    );
+
+    expect(responseTwo).toEqual({ users: [] });
+  });
+});
+
+describe('should map response before .then method and then eject interceptor - with mock', () => {
+  afterEach(jest.clearAllMocks);
+
+  it('get method', async function() {
     const httpService = new HttpService({
       host: 'http://localhost:4000/api/',
       headers: { Authorization: 'token' },
@@ -247,6 +429,29 @@ describe('Http service', () => {
 
     // eject interceptor
     const responseTwo = await httpService.get('/users', {
+      resInterceptor: undefined,
+    });
+
+    expect(responseTwo).toEqual({ users: [] });
+  });
+
+  it('post method', async function () {
+    const httpService = new HttpService({
+      host: 'http://localhost:4000/api/',
+      headers: { Authorization: 'token' },
+      resInterceptor: res => {
+        return res.then(r => ({ ...r, status: 'active' }));
+      },
+    });
+
+    httpService.mock.post('/users', { users: [] });
+
+    const responseOne = await httpService.post('/users', {});
+
+    expect(responseOne).toEqual({ users: [], status: 'active' });
+
+    // eject interceptor
+    const responseTwo = await httpService.post('/users', {},{
       resInterceptor: undefined,
     });
 

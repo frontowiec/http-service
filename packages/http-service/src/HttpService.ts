@@ -38,6 +38,7 @@ export interface ReqInterceptor extends Options {
 
 type Mock = {
   get: <R>(url: string, response: R) => Function;
+  post: <R>(url: string, response: R) => Function;
 };
 
 // todo: post method
@@ -56,6 +57,7 @@ export class HttpService {
 
   public mock: Mock = {
     get: this.mockService.get.bind(this.mockService),
+    post: this.mockService.post.bind(this.mockService),
   };
 
   constructor(private readonly options: Options = {}) {
@@ -66,11 +68,7 @@ export class HttpService {
     const mergedOptions = { ...this.options, ...options };
 
     // secure correct endpoint
-    let endpoint: string = '';
-
-    if (mergedOptions.host !== undefined) {
-      endpoint = this.urlService.parse(mergedOptions.host, url);
-    }
+    let endpoint: string = this.urlService.parse(mergedOptions.host, url);
 
     // build request options
     let mappedOptions = mergedOptions;
@@ -110,5 +108,54 @@ export class HttpService {
         return mappedResponse;
       }
     );
+  }
+
+  public post<R = unknown, B = unknown>(
+    url: string,
+    body: B,
+    options?: Options
+  ): Promise<R> {
+    const mergedOptions = { ...this.options, ...options };
+    // secure correct endpoint
+    let endpoint: string = this.urlService.parse(mergedOptions.host, url);
+
+    // build request options
+    let mappedOptions = mergedOptions;
+
+    if (mergedOptions.reqInterceptor !== undefined) {
+      mappedOptions = mergedOptions.reqInterceptor({
+        ...mergedOptions,
+        url: endpoint,
+      });
+    }
+
+    if (mappedOptions.enabledMock) {
+      if (mappedOptions.resInterceptor) {
+        return mappedOptions.resInterceptor(this.mockService.from('post', url));
+      }
+      return this.mockService.from('post', url);
+    }
+
+    return fetch(endpoint, {
+      headers: mappedOptions.headers,
+      body: JSON.stringify(body), // todo reqInterceptor doesnt mapped body
+    }).then(response => {
+      let mappedResponse = response[mappedOptions.responseType!]();
+
+      if (mappedOptions.resInterceptor) {
+        mappedResponse = mappedOptions.resInterceptor(mappedResponse);
+      }
+
+      if (!response.ok) {
+        throw {
+          status: response.status,
+          message: response.statusText,
+          name: 'Ajax Error',
+          response: mappedResponse,
+        } as AjaxError;
+      }
+
+      return mappedResponse;
+    });
   }
 }
