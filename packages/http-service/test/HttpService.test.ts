@@ -199,8 +199,57 @@ describe('Http service', () => {
 
     // eject interceptor
     httpService.get('/users', { reqInterceptor: undefined });
+
     expect(fetchSpy).toHaveBeenCalledWith('http://localhost:4000/api/users', {
       headers: { Authorization: 'token' },
     });
+  });
+
+  it('should map response before .then method and then eject interceptor', async function() {
+    // @ts-ignore
+    fetch.mockResponse(JSON.stringify(MOCK_RESPONSE_DATA));
+
+    const httpService = new HttpService({
+      host: 'http://localhost:4000/api/',
+      headers: { Authorization: 'token' },
+      enabledMock: false,
+      resInterceptor: res => {
+        return res.then(r => ({ ...r, status: 'active' }));
+      },
+    });
+
+    const responseOne = await httpService.get('/users');
+
+    expect(responseOne).toEqual({ users: [], status: 'active' });
+
+    // eject interceptor
+    const responseTwo = await httpService.get('/users', {
+      resInterceptor: undefined,
+    });
+
+    expect(responseTwo).toEqual({ users: [] });
+  });
+
+  it('should map response before .then method and then eject interceptor - with mock', async function() {
+    const httpService = new HttpService({
+      host: 'http://localhost:4000/api/',
+      headers: { Authorization: 'token' },
+      resInterceptor: res => {
+        return res.then(r => ({ ...r, status: 'active' }));
+      },
+    });
+
+    httpService.mock.get('/users', { users: [] });
+
+    const responseOne = await httpService.get('/users');
+
+    expect(responseOne).toEqual({ users: [], status: 'active' });
+
+    // eject interceptor
+    const responseTwo = await httpService.get('/users', {
+      resInterceptor: undefined,
+    });
+
+    expect(responseTwo).toEqual({ users: [] });
   });
 });

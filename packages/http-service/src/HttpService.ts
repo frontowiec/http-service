@@ -29,6 +29,7 @@ export interface Options extends Request {
   enabledMock?: boolean;
   mockDelay?: number;
   reqInterceptor?: (req: ReqInterceptor) => ReqInterceptor;
+  resInterceptor?: <T = unknown>(res: Promise<T>) => Promise<T>;
 }
 
 export interface ReqInterceptor extends Options {
@@ -44,7 +45,6 @@ export class HttpService {
     responseType: 'json',
     enabledMock: process.env.NODE_ENV === 'test',
     mockDelay: 0,
-    reqInterceptor: req => req,
   };
   private urlService = new UrlService();
   private mockService = new MockService({
@@ -81,21 +81,30 @@ export class HttpService {
 
     // return mock in test env
     if (mappedOptions.enabledMock) {
+      if (mappedOptions.resInterceptor) {
+        return mappedOptions.resInterceptor(this.mockService.from('get', url));
+      }
       return this.mockService.from('get', url);
     }
 
     return fetch(endpoint, { headers: mappedOptions.headers }).then(
       response => {
+        let mappedResponse = response[mappedOptions.responseType!]();
+
+        if (mappedOptions.resInterceptor) {
+          mappedResponse = mappedOptions.resInterceptor(mappedResponse);
+        }
+
         if (!response.ok) {
           throw {
             status: response.status,
             message: response.statusText,
             name: 'Ajax Error',
-            response: response[mappedOptions.responseType!](),
+            response: mappedResponse,
           } as AjaxError;
         }
 
-        return response[mappedOptions.responseType!]();
+        return mappedResponse;
       }
     );
   }
