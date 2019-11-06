@@ -1,6 +1,5 @@
-import { AjaxError } from 'AjaxError';
-
-type Methods = 'get' | 'post' | 'put' | 'patch' | 'delete';
+import { AjaxError } from './AjaxError';
+import { Methods } from './Methods';
 
 type MockOptions = {
   delay?: number;

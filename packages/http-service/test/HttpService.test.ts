@@ -46,6 +46,7 @@ describe('should call api for data with global options', function() {
     expect(fetchSpy).toHaveBeenCalledWith('http://localhost:4000/api/users', {
       headers: { Authorization: 'token' },
       body: JSON.stringify(BODY),
+      method: 'post',
     });
     expect(result).toEqual(BODY);
   });
@@ -96,6 +97,7 @@ describe('should call api for data with overrides options', function() {
     expect(fetchSpy).toHaveBeenCalledWith('http://localhost:5000/api/users', {
       headers: localOptions.headers,
       body: JSON.stringify({}),
+      method: 'post',
     });
   });
 });
@@ -339,6 +341,7 @@ describe('should map request before send and then eject interceptor', function()
     expect(fetchSpy).toHaveBeenCalledWith('http://localhost:4000/api/users', {
       headers: { Authorization: 'specialToken' },
       body: JSON.stringify({}),
+      method: "post"
     });
 
     // eject interceptor
@@ -347,6 +350,7 @@ describe('should map request before send and then eject interceptor', function()
     expect(fetchSpy).toHaveBeenCalledWith('http://localhost:4000/api/users', {
       headers: { Authorization: 'token' },
       body: JSON.stringify({}),
+      method: 'post',
     });
   });
 });

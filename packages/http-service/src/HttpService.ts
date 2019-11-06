@@ -41,6 +41,7 @@ type Mock = {
   post: <R>(url: string, response: R) => Function;
 };
 
+// todo: TypeError: Failed to execute 'fetch' on 'Window': Request with GET/HEAD method cannot have body.
 // todo: extract generic parts
 
 export class HttpService {
@@ -136,6 +137,7 @@ export class HttpService {
     }
 
     return fetch(endpoint, {
+      method: 'post',
       headers: mappedOptions.headers,
       body: JSON.stringify(body), // todo reqInterceptor doesnt mapped body
     }).then(response => {
