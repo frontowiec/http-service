@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { HttpService, AjaxError } from "http-service";
+import { FetchHttpService } from "fetch-http-service";
 import ErrorBoundary from "react-error-boundary";
 
-export const httpService = new HttpService({
+const fetchService = new FetchHttpService();
+
+export const httpService = new HttpService(fetchService, {
   host: "http://localhost:4000/api",
   enabledMock: process.env.NODE_ENV === "test",
   mockDelay: 100,

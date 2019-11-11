@@ -1,17 +1,14 @@
-import { AjaxError } from './AjaxError';
-import { Methods } from './Methods';
+import { AjaxError, Methods, MockOptions } from 'http-service';
 
-type MockOptions = {
-  delay?: number;
-};
+// todo: http-service powinein dostarczać podstawowej logiki
 
-export class MockService {
+export class PromiseMockService {
   private static defaultOptions: MockOptions = { delay: 0 };
   private getRepository = new Map<string, unknown>();
   private postRepository = new Map<string, unknown>();
 
   constructor(private readonly options: MockOptions = {}) {
-    this.options = { ...MockService.defaultOptions, ...this.options };
+    this.options = { ...PromiseMockService.defaultOptions, ...this.options };
   }
 
   public from<R = unknown>(method: Methods, url: string): Promise<R> {

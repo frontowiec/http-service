@@ -1,11 +1,11 @@
-import { MockService } from '../src/MockService';
-import { AjaxError } from '../src/AjaxError';
+import { PromiseMockService } from '../src/PromiseMockService';
+import { AjaxError } from 'http-service';
 
 describe('Mock service', () => {
   afterEach(jest.clearAllMocks)
 
   it('should set and return mocked data for http get method', async () => {
-    const mockService = new MockService();
+    const mockService = new PromiseMockService();
     const spyFrom = jest.spyOn(mockService, 'from');
     const spyGet = jest.spyOn(mockService, 'get');
 
@@ -21,7 +21,7 @@ describe('Mock service', () => {
   });
 
   it('should set and return mocked data for http post method', async () => {
-    const mockService = new MockService();
+    const mockService = new PromiseMockService();
     const spyFrom = jest.spyOn(mockService, 'from');
     const spyPost = jest.spyOn(mockService, 'post');
 
@@ -37,7 +37,7 @@ describe('Mock service', () => {
   });
 
   it('should set and return error object for failed http get method', async function() {
-    const mockService = new MockService();
+    const mockService = new PromiseMockService();
 
     const ERROR = {
       name: 'Ajax error',
@@ -56,7 +56,7 @@ describe('Mock service', () => {
   });
 
   it('should throw exception when called mock not exist yet', function() {
-    const mockService = new MockService();
+    const mockService = new PromiseMockService();
 
     // no previously set mock
 
@@ -66,7 +66,7 @@ describe('Mock service', () => {
   });
 
   it('should throw exception when try save same url two times', function() {
-    const mockService = new MockService();
+    const mockService = new PromiseMockService();
 
     mockService.get('/users', {});
 
@@ -78,7 +78,7 @@ describe('Mock service', () => {
   it('should return mocked response with delay', async function() {
     const DELAY = 100;
     const RESPONSE = { users: [] };
-    const mockService = new MockService({ delay: DELAY });
+    const mockService = new PromiseMockService({ delay: DELAY });
 
     mockService.get('/users', RESPONSE);
 

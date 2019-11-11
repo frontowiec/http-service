@@ -1,6 +1,7 @@
 import { UrlService } from './UrlService';
-import { MockService } from './MockService';
-import { AjaxError } from './AjaxError';
+import { Options } from './Options';
+import { HttpServiceImpl } from './HttpServiceImpl';
+import { Mock } from './Mock';
 
 /*export interface AjaxRequest {
   url?: string;
@@ -19,28 +20,6 @@ import { AjaxError } from './AjaxError';
   responseType?: string;
 }*/
 
-export interface Request {
-  host?: string;
-  headers?: HeadersInit;
-  responseType?: 'json' | 'text' | 'arrayBuffer' | 'blob' | 'formData';
-}
-
-export interface Options extends Request {
-  enabledMock?: boolean;
-  mockDelay?: number;
-  reqInterceptor?: (req: ReqInterceptor) => ReqInterceptor;
-  resInterceptor?: <T = unknown>(res: Promise<T>) => Promise<T>;
-}
-
-export interface ReqInterceptor extends Options {
-  url?: string;
-}
-
-type Mock = {
-  get: <R>(url: string, response: R) => Function;
-  post: <R>(url: string, response: R) => Function;
-};
-
 // todo: TypeError: Failed to execute 'fetch' on 'Window': Request with GET/HEAD method cannot have body.
 // todo: extract generic parts
 
@@ -51,7 +30,7 @@ export class HttpService {
     mockDelay: 0,
   };
   private urlService = new UrlService();
-  private mockService = new MockService({
+  private mockService = this.service.createMock({
     delay: this.options.mockDelay,
   });
 
@@ -60,11 +39,14 @@ export class HttpService {
     post: this.mockService.post.bind(this.mockService),
   };
 
-  constructor(private readonly options: Options = {}) {
+  constructor(
+    private service: HttpServiceImpl,
+    private readonly options: Options = {}
+  ) {
     this.options = { ...HttpService.defaultOptions, ...this.options };
   }
 
-  public get<R = unknown>(url: string, options?: Options): Promise<R> {
+  public get(url: string, options?: Options) {
     const mergedOptions = { ...this.options, ...options };
 
     // secure correct endpoint
@@ -88,33 +70,10 @@ export class HttpService {
       return this.mockService.from('get', url);
     }
 
-    return fetch(endpoint, { headers: mappedOptions.headers }).then(
-      response => {
-        let mappedResponse = response[mappedOptions.responseType!]();
-
-        if (mappedOptions.resInterceptor) {
-          mappedResponse = mappedOptions.resInterceptor(mappedResponse);
-        }
-
-        if (!response.ok) {
-          throw {
-            status: response.status,
-            message: response.statusText,
-            name: 'Ajax Error',
-            response: mappedResponse,
-          } as AjaxError;
-        }
-
-        return mappedResponse;
-      }
-    );
+    return this.service.get(endpoint, mappedOptions);
   }
 
-  public post<R = unknown, B = unknown>(
-    url: string,
-    body: B,
-    options?: Options
-  ): Promise<R> {
+  public post(url: string, body: any, options?: Options) {
     const mergedOptions = { ...this.options, ...options };
     // secure correct endpoint
     let endpoint: string = this.urlService.parse(mergedOptions.host, url);
@@ -136,27 +95,6 @@ export class HttpService {
       return this.mockService.from('post', url);
     }
 
-    return fetch(endpoint, {
-      method: 'post',
-      headers: mappedOptions.headers,
-      body: JSON.stringify(body), // todo reqInterceptor doesnt mapped body
-    }).then(response => {
-      let mappedResponse = response[mappedOptions.responseType!]();
-
-      if (mappedOptions.resInterceptor) {
-        mappedResponse = mappedOptions.resInterceptor(mappedResponse);
-      }
-
-      if (!response.ok) {
-        throw {
-          status: response.status,
-          message: response.statusText,
-          name: 'Ajax Error',
-          response: mappedResponse,
-        } as AjaxError;
-      }
-
-      return mappedResponse;
-    });
+    return this.service.post(endpoint, body, mappedOptions);
   }
 }
